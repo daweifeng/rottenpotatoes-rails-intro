@@ -11,10 +11,45 @@ class MoviesController < ApplicationController
   end
 
   def index
+
     @movies = Movie.all
-    if params[:sort]
-      @movies = @movies.order(params[:sort])
+    @all_ratings = @movies.getRatings
+
+    if session[:ratings] != params[:ratings]
+      session[:ratings] = params[:ratings]
     end
+
+    # Set rating check_box_tag 
+    if session[:ratings].nil?
+      @checked_ratings = []
+    else
+      @checked_ratings = session[:ratings]
+    end
+    
+    
+    if session[:sort] != params[:sort]
+      session[:sort] = params[:sort]
+    end
+    
+    if session[:sort].nil? and session[:ratings]
+      puts session[:ratings]
+
+      @movies = @movies.with_ratings(session[:ratings])
+    elsif session[:sort] and session[:ratings].nil?
+      puts session[:sort]
+      @movies = @movies.order(session[:sort])
+    elsif session[:sort] and session[:ratings]
+      puts session[:ratings]
+      puts session[:sort]
+      @movies = @movies.order(params[:sort]).select {|movie| params[:ratings].include? movie.rating}
+    else
+      @movies = Movie.all
+    end
+
+
+    # if params[:sort]
+    #   @movies = @movies.order(params[:sort])
+    # end
     if params[:sort] == 'title'
       @hilite_title = 'hilite'
     elsif params[:sort] == 'release_date'

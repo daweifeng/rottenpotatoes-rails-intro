@@ -15,18 +15,24 @@ class MoviesController < ApplicationController
     @movies = Movie.all
     @all_ratings = @movies.getRatings
 
+    if params[:ratings].nil?
+      flash.keep
+      redirect_to movies_path({ratings: session[:ratings], sort: session[:sort]})
+    end
+    
+
     if session[:ratings] != params[:ratings]
       session[:ratings] = params[:ratings]
     end
 
     # Set rating check_box_tag 
-    if session[:ratings].nil?
-      @checked_ratings = []
-    else
-      @checked_ratings = session[:ratings]
+    @checked_ratings = session[:ratings]
+
+    if params[:sort].nil? and not session[:sort].nil?
+      flash.keep
+      redirect_to movies_path({ratings: session[:ratings], sort: session[:sort]})
     end
-    
-    
+
     if session[:sort] != params[:sort]
       session[:sort] = params[:sort]
     end
@@ -36,11 +42,10 @@ class MoviesController < ApplicationController
 
       @movies = @movies.with_ratings(session[:ratings])
     elsif session[:sort] and session[:ratings].nil?
-      puts session[:sort]
+
       @movies = @movies.order(session[:sort])
     elsif session[:sort] and session[:ratings]
-      puts session[:ratings]
-      puts session[:sort]
+
       @movies = @movies.order(params[:sort]).select {|movie| params[:ratings].include? movie.rating}
     else
       @movies = Movie.all
